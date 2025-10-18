@@ -1,5 +1,5 @@
 [project]
-name = "nova_pg"
+name = "nova"
 version = "0.1.0"
 description = "Utility per PostgreSQL"
 authors = [{ name = "Lorenzo Santarsieri" }]

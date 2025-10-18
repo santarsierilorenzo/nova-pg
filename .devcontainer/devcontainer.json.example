@@ -1,11 +1,11 @@
 {
-  "name": "Nova_PG",
+  "name": "nova",
   "build": {
     "dockerfile": "Dockerfile",
     "context": ".."
   },
-  "workspaceMount": "source=${localWorkspaceFolder},target=/nova_pg,type=bind",
-  "workspaceFolder": "/nova_pg",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/nova,type=bind",
+  "workspaceFolder": "/nova",
   "customizations": {
     "vscode": {
       "extensions": [
