@@ -1,4 +1,4 @@
-from db_utils import load_db_config
+from nova_pg.db_utils import load_db_config
 from pathlib import Path
 import pytest
 import json
