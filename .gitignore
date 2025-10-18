@@ -1,5 +1,8 @@
 .devcontainer/
 devcontainer.json
+db_config.json
+main.py
+.gitignore
 
 .env
 .venv/
@@ -14,3 +17,4 @@ dist/
 .idea/
 
 *.log
+
