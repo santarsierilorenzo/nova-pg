@@ -22,7 +22,7 @@ Follow these steps to set up your local development environment:
 
 1. Clone the repository:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/santarsierilorenzo/nova-pg.git
    ```
 
 2. Copy the example dev container configuration file:
