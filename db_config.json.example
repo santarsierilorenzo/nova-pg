@@ -1,0 +1,26 @@
+{
+  "dev": {
+      "host": "",
+      "port": 5432,
+      "dbname": "",
+      "user": "",
+      "password": ""
+  },
+
+  "staging": {
+
+      "host": "",
+      "port": 5432,
+      "dbname": "",
+      "user": "",
+      "password": ""
+  },
+
+  "prod": {
+      "host": "",
+      "port": 5432,
+      "dbname": "",
+      "user": "",
+      "password": ""
+  }
+}
