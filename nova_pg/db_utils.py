@@ -101,6 +101,7 @@ def build_connection_string(
         str: A valid PostgreSQL connection string.
     """
     all_keys_present, missing_keys = _db_keys_check(db_cred_dict=db_cred_dict)
+    
     if not all_keys_present:
         raise Exception(f"Missing required keys: {missing_keys}")
 
