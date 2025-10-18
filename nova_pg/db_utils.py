@@ -1,3 +1,16 @@
+"""
+db_utils.py
+------------------------------------
+Module for managing database connections and basic operations.
+
+Includes:
+- Loading configuration (from file or environment variables)
+- Creating database connections
+- Utility functions for queries and transactions
+- Safe connection closure and basic logging
+"""
+
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Dict
 import json
@@ -47,3 +60,119 @@ def load_db_config(
 
     except Exception as e:
         raise Exception(f"Error loading DB configuration: {e}")
+    
+
+def build_connection_string(config: dict) -> str:
+    """Build a PostgreSQL connection string from a configuration dictionary.
+
+    Args:
+        config (dict): The database configuration containing host, port,
+        dbname, user, and password.
+
+    Returns:
+        str: A valid PostgreSQL connection string.
+    """
+    raise NotImplementedError("This function hasn't been implemented yet.")
+
+
+def connect_to_db(env_name: str = "dev"):
+    """Open a database connection for the specified environment.
+
+    Args:
+        env_name (str): The target environment (default: "dev").
+
+    Returns:
+        psycopg2.connection: An active database connection object.
+    """
+    raise NotImplementedError("This function hasn't been implemented yet.")
+
+@contextmanager
+def get_cursor(env_name: str = "dev"):
+    """Context manager that provides a database cursor with automatic
+    commit/rollback handling.
+
+    Example:
+        with get_cursor("dev") as cur:
+            cur.execute("SELECT * FROM raw.ohlcv;")
+
+    Args:
+        env_name (str): The target environment (default: "dev").
+
+    Yields:
+        psycopg2.cursor: A cursor object ready for executing queries.
+    """
+    raise NotImplementedError("This function hasn't been implemented yet.")
+
+
+def execute_query(query: str, env_name: str = "dev"):
+    """Execute a single SQL query (INSERT, UPDATE, DELETE, etc.).
+
+    Args:
+        query (str): The SQL statement to be executed.
+        env_name (str): The target environment (default: "dev").
+    """
+    raise NotImplementedError("This function hasn't been implemented yet.")
+
+
+def fetch_query(query: str, env_name: str = "dev") -> list:
+    """Execute a SELECT query and return the fetched results.
+
+    Args:
+        query (str): The SQL SELECT query.
+        env_name (str): The target environment (default: "dev").
+
+    Returns:
+        list: The result set returned by the query.
+    """
+    raise NotImplementedError("This function hasn't been implemented yet.")
+
+
+def create_schema(schema_name: str, env_name: str = "dev"):
+    """Create a new schema (namespace) in the database if it does not already
+    exist.
+
+    Args:
+        schema_name (str): The name of the schema to create.
+        env_name (str): The target environment (default: "dev").
+    """
+    raise NotImplementedError("This function hasn't been implemented yet.")
+
+
+def create_table(query: str, env_name: str = "dev"):
+    """Execute a CREATE TABLE statement to define a new database table.
+
+    Args:
+        query (str): The SQL CREATE TABLE statement.
+        env_name (str): The target environment (default: "dev").
+    """
+    raise NotImplementedError("This function hasn't been implemented yet.")
+
+
+def insert_dataframe(df, table_name: str, env_name: str = "dev"):
+    """Insert a pandas DataFrame into a target database table.
+
+    Args:
+        df (pandas.DataFrame): The DataFrame to insert.
+        table_name (str): The name of the target table.
+        env_name (str): The target environment (default: "dev").
+    """
+    raise NotImplementedError("This function hasn't been implemented yet.")
+
+
+def log_db_event(message: str, level: str = "INFO"):
+    """Log database-related events or errors.
+
+    Args:
+        message (str): The log message.
+        level (str): The log level ("INFO", "WARNING", "ERROR").
+    """
+    raise NotImplementedError("This function hasn't been implemented yet.")
+
+
+def close_connection(conn):
+    """Safely close an active database connection.
+
+    Args:
+        conn (psycopg2.connection): The database connection object.
+    """
+    raise NotImplementedError("This function hasn't been implemented yet.")
