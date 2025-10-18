@@ -11,8 +11,9 @@ Includes:
 """
 
 from contextlib import contextmanager
-from pathlib import Path
 from typing import Tuple, Dict
+from pathlib import Path
+import psycopg2
 import json
 
 
@@ -117,20 +118,30 @@ def build_connection_string(
     )
 
 
-def connect_to_db(env_name: str = "dev"):
+def connect_to_db(
+    database_url: str, 
+):
     """Open a database connection for the specified environment.
 
     Args:
-        env_name (str): The target environment (default: "dev").
+        database_url: url string builded using `build_connection_string`.
 
     Returns:
         psycopg2.connection: An active database connection object.
     """
-    raise NotImplementedError("This function hasn't been implemented yet.")
-
+    try:
+        conn = psycopg2.connect(database_url)
+        conn.autocommit = False
+        return conn
+    
+    except psycopg2.Error as e:
+        raise ConnectionError(f"Connection to db failed: {e}")
+    
 
 @contextmanager
-def get_cursor(env_name: str = "dev"):
+def get_cursor(
+    database_url: str
+):
     """Context manager that provides a database cursor with automatic
     commit/rollback handling.
 
@@ -144,17 +155,37 @@ def get_cursor(env_name: str = "dev"):
     Yields:
         psycopg2.cursor: A cursor object ready for executing queries.
     """
-    raise NotImplementedError("This function hasn't been implemented yet.")
+    conn = connect_to_db(database_url)
+    cur = conn.cursor()
+
+    try:
+        yield cur
+        conn.commit()  # Confirm modifies
+
+    except Exception as e:
+        conn.rollback()
+        raise
+
+    finally:
+        cur.close()
+        conn.close()
 
 
-def execute_query(query: str, env_name: str = "dev"):
+def execute_query(
+    *,
+    query: str,
+    cur
+) -> None:
     """Execute a single SQL query (INSERT, UPDATE, DELETE, etc.).
 
     Args:
         query (str): The SQL statement to be executed.
-        env_name (str): The target environment (default: "dev").
+        cur: psycopg2.cursor: A cursor object ready for executing queries.
     """
-    raise NotImplementedError("This function hasn't been implemented yet.")
+    try:
+        cur.execute(query)
+    except Exception as e:
+        raise Exception(f"An error occurred during query execution: {e}")
 
 
 def fetch_query(query: str, env_name: str = "dev") -> list:
