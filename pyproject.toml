@@ -1,11 +1,16 @@
 [project]
-name = "nova"
+name = "nova-pg"
 version = "0.1.0"
-description = "Utility per PostgreSQL"
+description = "PostgreSQL utilities"
+readme = "README.md"
+license = { text = "MIT" }
 authors = [{ name = "Lorenzo Santarsieri" }]
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+    "psycopg2>=2.9",
+    "pandas>=2.0",
+]
 
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
