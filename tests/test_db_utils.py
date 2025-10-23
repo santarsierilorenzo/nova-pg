@@ -1,149 +1,117 @@
-from nova_pg import db_utils
-from pathlib import Path
+from unittest.mock import patch, MagicMock
+from nova_pg import utils
 import pytest
-import json
 
 
-@pytest.fixture
-def valid_config(tmp_path):
-    """Create a temporary valid JSON config file for testing"""
-    config_data = {
-        "dev": {
-            "host": "localhost",
-            "port": 5432,
-            "dbname": "test_db",
-            "user": "postgres",
-            "password": "secret"
-        }
-    }
-    file_path = tmp_path / "config.json"
-    file_path.write_text(json.dumps(config_data))
+@patch("psycopg2.connect")
+def test_connect_to_db(mock_connect):
+    mock_conn = MagicMock()
+    mock_connect.return_value = mock_conn
 
-    return file_path
+    conn = utils.connect_to_db("fake_url")
+
+    mock_connect.assert_called_once_with("fake_url")
+    assert conn == mock_conn
+    assert conn.autocommit is False
 
 
-def test_valid_cred_dict():
-    """Given a valid dictionary containing all required keys for a database
-    connection, verify that the returned tuple matches the expected result.
-    """
-    proper_config_data = {
-        "host": "localhost",
-        "port": 5432,
-        "dbname": "test_db",
-        "user": "postgres",
-        "password": "secret"
-    }
+@patch("psycopg2.connect")
+def test_get_cursor_success(mock_connect):
+    mock_conn = MagicMock()
+    mock_cursor = MagicMock()
+    mock_connect.return_value = mock_conn
+    mock_conn.cursor.return_value = mock_cursor
 
-    all_keys_present, missing_keys = db_utils._db_keys_check(
-        db_cred_dict=proper_config_data
-    )
+    with utils.get_cursor("fake_url") as cur:
+        cur.execute("SELECT 1")
 
-    assert all_keys_present is True
-    assert missing_keys == set()
+    mock_conn.cursor.assert_called_once()
+    mock_cursor.execute.assert_called_once_with("SELECT 1")
+    mock_conn.commit.assert_called_once()
+    mock_cursor.close.assert_called_once()
+    mock_conn.close.assert_called_once()
 
 
-def test_missing_keys_cred_dict():
-    """Given a dictionary missing some of the required keys for a database
-    connection, verify that the returned tuple matches the expected result.
-    """
-    incomplete_config_data = {
-        "port": 5432,
-        "dbname": "test_db",
-        "user": "postgres",
-    }
-
-    all_keys_present, missing_keys = db_utils._db_keys_check(
-        db_cred_dict=incomplete_config_data
-    )
-
-    assert all_keys_present is False
-    assert missing_keys == {"host", "password"}
-
-
-def test_valid_config_loads_correctly(valid_config):
-    """Should correctly load valid configuration"""
-    result = db_utils.load_db_config(
-        config_file_path=valid_config,
-        env_name="dev"
-    )
-    assert result["host"] == "localhost"
-    assert result["port"] == 5432
-    assert set(result.keys()) == {
-        "host", "port", "dbname", "user", "password"
-    }
-
-
-def test_missing_file_raises_error():
-    """Should raise error when file does not exist"""
-    fake_path = Path("non_existent_config.json")
-    with pytest.raises(Exception):
-        db_utils.load_db_config(config_file_path=fake_path, env_name="dev")
-
-
-def test_invalid_env_raises_exception(valid_config):
-    """Should raise KeyError when env not found"""
-    with pytest.raises(Exception):
-        db_utils.load_db_config(config_file_path=valid_config, env_name="prod")
-
-
-def test_missing_keys_raises_exception(tmp_path):
-    """Should raise KeyError if required keys are missing"""
-    bad_data = {
-        "dev": {
-            "host": "localhost",
-            "port": 5432
-        }
-    }
-    bad_file = tmp_path / "config.json"
-    bad_file.write_text(json.dumps(bad_data))
-
-    with pytest.raises(Exception) as exc:
-        db_utils.load_db_config(config_file_path=bad_file, env_name="dev")
-
-    assert "Missing required keys" in str(exc.value)
-
-
-def test_invalid_json_format(tmp_path):
-    """Should raise error for malformed JSON"""
-    bad_file = tmp_path / "config.json"
-    bad_file.write_text("{invalid_json: true,}")  # broken JSON
+@patch("psycopg2.connect")
+def test_get_cursor_exception_triggers_rollback(mock_connect):
+    mock_conn = MagicMock()
+    mock_cursor = MagicMock()
+    mock_connect.return_value = mock_conn
+    mock_conn.cursor.return_value = mock_cursor
 
     with pytest.raises(Exception):
-        db_utils.load_db_config(config_file_path=bad_file, env_name="dev")
-        
-    
-def test_missing_keys_raises_exception_build_string():
-    """Test that `build_connection_string` raises an Exception
-    when required database keys are missing.
-    """
-    bad_data = {
-        "host": "localhost",
-        "port": 5432
-    }
-    with pytest.raises(Exception):
-        db_utils.build_connection_string(bad_data)
+        with utils.get_cursor("fake_url") as cur:
+            raise Exception("boom")
+
+    mock_conn.rollback.assert_called_once()
+    mock_cursor.close.assert_called_once()
+    mock_conn.close.assert_called_once()
 
 
-def test_valid_connection_string_format():
-    """Given proper database credentials, check that the connection string 
-    is correctly formatted.
-    """
-    proper_config_data = {
-        "host": "localhost",
-        "port": 5432,
-        "dbname": "test_db",
-        "user": "postgres",
-        "password": "secret"
-    }
+def test_execute_query_success():
+    mock_cursor = MagicMock()
+    utils.execute_query(cur=mock_cursor, query="SELECT 1",)
+    mock_cursor.execute.assert_called_once_with("SELECT 1")
 
-    expected_string = (
-        "postgresql://postgres:secret@localhost:5432/"
-        "test_db?sslmode=require"
+
+def test_execute_query_failure():
+    mock_cursor = MagicMock()
+    mock_cursor.execute.side_effect = Exception("sql error")
+
+    with pytest.raises(Exception) as e:
+        utils.execute_query(cur=mock_cursor, query="SELECT 1")
+
+    assert "An error occurred during query execution" in str(e.value)
+
+
+def test_fetch_query_success():
+    mock_cursor = MagicMock()
+    mock_cursor.fetchall.return_value = [("row1",), ("row2",)]
+
+    result = utils.fetch_query(
+        cur=mock_cursor,
+        query="SELECT * FROM table"
     )
 
-    connection_string = db_utils.build_connection_string(
-        db_cred_dict=proper_config_data
+    mock_cursor.execute.assert_called_once_with("SELECT * FROM table")
+    mock_cursor.fetchall.assert_called_once()
+    assert result == [("row1",), ("row2",)]
+
+
+def test_fetch_query_failure():
+    mock_cursor = MagicMock()
+    mock_cursor.execute.side_effect = Exception("db error")
+
+    with pytest.raises(Exception) as e:
+        utils.fetch_query(
+            cur=mock_cursor,
+            query="SELECT * FROM table"
+        )
+
+    assert "An error occurred during fetch" in str(e.value)
+
+
+def test_create_schema_success():
+    mock_cursor = MagicMock()
+
+    utils.create_schema(
+        cur=mock_cursor,
+        schema_name="myschema"
     )
 
-    assert connection_string == expected_string
-    
+    mock_cursor.execute.assert_called_once_with(
+        'CREATE SCHEMA IF NOT EXISTS "myschema";'
+    )
+
+
+def test_create_schema_failure():
+    mock_cursor = MagicMock()
+    mock_cursor.execute.side_effect = Exception("create error")
+
+    with pytest.raises(Exception) as e:
+        utils.create_schema(
+            cur=mock_cursor,
+            schema_name="myschema"
+        )
+
+    assert "Error creating schema 'myschema'" in str(e.value)

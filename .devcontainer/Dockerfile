@@ -11,6 +11,6 @@ COPY . .
 RUN pip install --no-cache-dir -e .
 
 USER myuser
-ENV PYTHONPATH="nova/"
+ENV PYTHONPATH="/nova"
 
 CMD ["bash"]
