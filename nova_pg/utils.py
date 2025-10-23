@@ -1,5 +1,7 @@
 from contextlib import contextmanager
+import pandas as pd
 import psycopg2
+import io
 
 
 def connect_to_db(
@@ -98,7 +100,7 @@ def create_schema(
     *,
     cur,
     schema_name: str
-):
+) -> None:
     """Create a new schema (namespace) in the database if it does not already
     exist.
 
@@ -113,3 +115,35 @@ def create_schema(
     except Exception as e:
         raise Exception(f"Error creating schema '{schema_name}': {e}")
 
+
+def insert_dataframe(
+    cur,
+    df: pd.DataFrame,
+    table_name: str
+):
+    """Insert a pandas DataFrame into a target database table.
+
+    Args:
+        df (pandas.DataFrame): The DataFrame to insert.
+        table_name (str): The name of the target table.
+        env_name (str): The target environment (default: "dev").
+    """
+    if df.empty:
+        raise ValueError(
+            "The provided DataFrame is empty and cannot be inserted."
+        )
+
+    buffer = io.StringIO()
+    df.to_csv(buffer, index=False, header=False)
+    buffer.seek(0)
+
+    try:
+        cur.copy_from(buffer, table_name, sep=",", columns=df.columns)
+        
+    except Exception as e:
+        raise Exception(
+            f"Error inserting DataFrame into table '{table_name}': {e}"
+        )
+    
+    finally:
+        buffer.close()
