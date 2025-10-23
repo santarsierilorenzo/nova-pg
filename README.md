@@ -5,10 +5,7 @@ It provides a set of helper functions that make it easier to connect, query, and
 
 The main goal of this project is to accelerate development, enable scalability, and offer a portable package that can be easily integrated wherever database access is required.
 
----
-
 ## Installation
-
 You can install **Nova PG** directly from [PyPI](https://pypi.org) using `pip`:
 
 ```bash
@@ -21,21 +18,15 @@ Or, if you want to test the latest version from **TestPyPI**, use:
 pip install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple nova-pg
 ```
 
----
-
 ## Repository Structure
-------------------------------------------------------------
-
 This repository includes:
 - Example configuration files for environment setup.
 - A dedicated test folder to validate the functionality of the helper functions.
 - A Docker-based development environment for consistent and isolated builds.
 
----
+
 
 ## Development Setup
-------------------------------------------------------------
-
 Follow these steps to set up your local development environment:
 
 1. Clone the repository:
