@@ -25,7 +25,6 @@ This repository includes:
 - A Docker-based development environment for consistent and isolated builds.
 
 
-
 ## Development Setup
 Follow these steps to set up your local development environment:
 
@@ -45,3 +44,45 @@ Follow these steps to set up your local development environment:
    ```
 
 4. Once the Docker container is running, you’ll have access to all required dependencies and tools pre-installed.
+
+
+## Get Started
+
+1. Copy `db_config.json.example`, rename it to `db_config.json`, and fill it with your database credentials.
+
+2. Import the package:
+
+```python
+import nova_pg
+```
+
+3. Load your database credentials from `db_config.json`:
+
+```python
+db_cred = nova_pg.config.load_db_config(
+    config_file_path="path_to_your_json",
+    env_name="dev"
+)
+```
+
+4. Build your connection string:
+
+```python
+url_db = nova_pg.config.build_connection_string(
+    db_cred_dict=db_cred
+)
+```
+
+5. Use functions in the `utils` module:
+
+```python
+QUERY = ""
+with nova_pg.utils.get_cursor(url_db) as cur:
+    data = nova_pg.utils.fetch_query(
+        cur=cur,
+        query=QUERY
+    )
+```
+
+
+
