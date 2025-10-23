@@ -1,5 +1,6 @@
 from unittest.mock import patch, MagicMock
 from nova_pg import utils
+import pandas as pd
 import pytest
 
 
@@ -115,3 +116,64 @@ def test_create_schema_failure():
         )
 
     assert "Error creating schema 'myschema'" in str(e.value)
+
+
+def test_insert_dataframe_success():
+    mock_cursor = MagicMock()
+
+    df = pd.DataFrame(
+        {
+            "ticker": ["AAPL", "TSLA", "USO"],
+            "price": [350, 400, 25]
+        }
+    )
+
+    utils.insert_dataframe(
+        cur=mock_cursor,
+        df=df,
+        table_name="mock_prices"
+    )
+
+    # Check if copy_from has been called only once
+    mock_cursor.copy_from.assert_called_once()
+
+    args, kwargs = mock_cursor.copy_from.call_args
+    assert args[1] == "mock_prices"
+    assert kwargs["sep"] == ","
+    assert list(kwargs["columns"]) == ["ticker", "price"]
+
+
+def test_insert_dataframe_failure():
+    mock_cursor = MagicMock()
+
+    df = pd.DataFrame(
+        {
+            "ticker": ["AAPL", "TSLA", "USO"],
+            "price": [350, 400, 25]
+        }
+    )
+
+    mock_cursor.copy_from.side_effect = Exception("db copy error")
+
+    with pytest.raises(Exception) as e:
+        utils.insert_dataframe(
+            cur=mock_cursor,
+            df=df,
+            table_name="prices"
+        )
+
+    assert "Error inserting DataFrame" in str(e.value)
+
+
+def test_insert_empty_dataframe():
+    mock_cursor = MagicMock()
+    df = pd.DataFrame()
+
+    with pytest.raises(ValueError) as e:
+        utils.insert_dataframe(
+            cur=mock_cursor,
+            df=df,
+            table_name="mock_prices"
+        )
+
+    assert "empty" in str(e.value).lower()

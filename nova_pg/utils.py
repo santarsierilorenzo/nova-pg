@@ -117,6 +117,7 @@ def create_schema(
 
 
 def insert_dataframe(
+    *,
     cur,
     df: pd.DataFrame,
     table_name: str
