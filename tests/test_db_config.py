@@ -13,7 +13,9 @@ def valid_config(tmp_path):
             "port": 5432,
             "dbname": "test_db",
             "user": "postgres",
-            "password": "secret"
+            "password": "secret",
+            "sslmode": "require",
+            "channel_binding": "require"
         }
     }
     file_path = tmp_path / "config.json"
@@ -31,7 +33,9 @@ def test_valid_cred_dict():
         "port": 5432,
         "dbname": "test_db",
         "user": "postgres",
-        "password": "secret"
+        "password": "secret",
+        "sslmode": "require",
+        "channel_binding": "require"
     }
 
     all_keys_present, missing_keys = config._db_keys_check(
@@ -69,7 +73,13 @@ def test_valid_config_loads_correctly(valid_config):
     assert result["host"] == "localhost"
     assert result["port"] == 5432
     assert set(result.keys()) == {
-        "host", "port", "dbname", "user", "password"
+        "host",
+        "port",
+        "dbname",
+        "user",
+        "password",
+        "sslmode",
+        "channel_binding"
     }
 
 
@@ -133,12 +143,14 @@ def test_valid_connection_string_format():
         "port": 5432,
         "dbname": "test_db",
         "user": "postgres",
-        "password": "secret"
+        "password": "secret",
+        "sslmode": "require",
+        "channel_binding": "require"
     }
 
     expected_string = (
         "postgresql://postgres:secret@localhost:5432/"
-        "test_db?sslmode=require"
+        "test_db?sslmode=require&channel_binding=require"
     )
 
     connection_string = config.build_connection_string(

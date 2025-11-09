@@ -65,11 +65,11 @@ def test_execute_query_failure():
     assert "An error occurred during query execution" in str(e.value)
 
 
-def test_fetch_query_success():
+def test_fetch_all_success():
     mock_cursor = MagicMock()
     mock_cursor.fetchall.return_value = [("row1",), ("row2",)]
 
-    result = utils.fetch_query(
+    result = utils.fetch_all(
         cur=mock_cursor,
         query="SELECT * FROM table"
     )
@@ -79,12 +79,12 @@ def test_fetch_query_success():
     assert result == [("row1",), ("row2",)]
 
 
-def test_fetch_query_failure():
+def test_fetch_all_failure():
     mock_cursor = MagicMock()
     mock_cursor.execute.side_effect = Exception("db error")
 
     with pytest.raises(Exception) as e:
-        utils.fetch_query(
+        utils.fetch_all(
             cur=mock_cursor,
             query="SELECT * FROM table"
         )
@@ -131,16 +131,23 @@ def test_insert_dataframe_success():
     utils.insert_dataframe(
         cur=mock_cursor,
         df=df,
-        table_name="mock_prices"
+        table_name="mock_prices",
+        schema="mock_schema"
     )
 
-    # Check if copy_from has been called only once
-    mock_cursor.copy_from.assert_called_once()
+    mock_cursor.copy_expert.assert_called_once()
 
-    args, kwargs = mock_cursor.copy_from.call_args
-    assert args[1] == "mock_prices"
-    assert kwargs["sep"] == ","
-    assert list(kwargs["columns"]) == ["ticker", "price"]
+    _, kwargs = mock_cursor.copy_expert.call_args
+    sql_arg = kwargs["sql"]
+    file_arg = kwargs["file"]
+
+    assert "COPY mock_schema.mock_prices" in sql_arg
+    assert "ticker" in sql_arg
+    assert "price" in sql_arg
+    assert "FROM STDIN WITH CSV" in sql_arg
+
+    import io
+    assert isinstance(file_arg, io.StringIO)
 
 
 def test_insert_dataframe_failure():
@@ -153,13 +160,14 @@ def test_insert_dataframe_failure():
         }
     )
 
-    mock_cursor.copy_from.side_effect = Exception("db copy error")
+    mock_cursor.copy_expert.side_effect = Exception("db copy error")
 
     with pytest.raises(Exception) as e:
         utils.insert_dataframe(
             cur=mock_cursor,
             df=df,
-            table_name="prices"
+            table_name="prices",
+            schema="mock_schema"
         )
 
     assert "Error inserting DataFrame" in str(e.value)
@@ -173,7 +181,8 @@ def test_insert_empty_dataframe():
         utils.insert_dataframe(
             cur=mock_cursor,
             df=df,
-            table_name="mock_prices"
+            table_name="mock_prices",
+            schema="mock_schema"
         )
 
     assert "empty" in str(e.value).lower()

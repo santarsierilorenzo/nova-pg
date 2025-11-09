@@ -98,8 +98,10 @@ def build_connection_string(
     db_host = db_cred_dict["host"]
     db_port = db_cred_dict["port"]
     db_name = db_cred_dict["dbname"]
+    sslmode = db_cred_dict["sslmode"]
+    channel_binding = db_cred_dict["channel_binding"]
 
     return (
         f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/"
-        f"{db_name}?sslmode=require"
+        f"{db_name}?sslmode={sslmode}&channel_binding={channel_binding}"
     )
