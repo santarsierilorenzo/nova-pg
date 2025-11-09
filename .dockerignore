@@ -1,0 +1,23 @@
+# Python caches / builds
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE / Editor
+.vscode/
+.devcontainer/
+
+# Local environment / secrets
+.env
+.venv/
+venv/
+env/
