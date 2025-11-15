@@ -16,21 +16,11 @@
   ],
 
   "mounts": [
-    "source=${localWorkspaceFolder},target=/${localWorkspaceFolderBasename},type=bind",
+    "source=${localWorkspaceFolder},target=/${localWorkspaceFolderBasename},type=bind"
   ],
-  
+
   "workspaceFolder": "/${localWorkspaceFolderBasename}",
   "remoteUser": "myuser",
-
-  "customizations": {
-    "vscode": {
-        "extensions": [
-            "eamodio.gitlens@17.0.1",
-            "PKief.material-icon-theme@5.27.0",
-            "ms-python.python@2025.16.0"
-        ]
-        }
-  },
 
   "containerEnv": {
     "PYTHONPATH": "/${localWorkspaceFolderBasename}"
@@ -38,5 +28,3 @@
 
   "postCreateCommand": "./setup.sh"
 }
-
-
