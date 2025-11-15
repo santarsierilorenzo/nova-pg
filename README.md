@@ -1,6 +1,6 @@
-# Nova PG
+# nova-pg
 
-Nova PG is a Python package designed to simplify and streamline interactions with PostgreSQL databases.  
+nova-pg is a Python package designed to simplify and streamline interactions with PostgreSQL databases.  
 It provides a set of helper functions that make it easier to connect, query, and manage data in a scalable and reusable way.
 
 The main goal of this project is to accelerate development, enable scalability, and offer a portable package that can be easily integrated wherever database access is required.
