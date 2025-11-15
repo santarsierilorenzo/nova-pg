@@ -1,9 +1,7 @@
 from contextlib import contextmanager
 from rich.progress import Progress
 from typing import List
-import pandas as pd
 import psycopg2
-import io
 
 
 def connect_to_db(
@@ -166,36 +164,6 @@ def create_schema(
 
     except Exception as e:
         raise Exception(f"Error creating schema '{schema_name}': {e}")
-
-
-def insert_dataframe(
-    *,
-    cur, df: pd.DataFrame,
-    table_name: str,
-    schema: str
-):
-    """Insert a pandas DataFrame into a target database table."""
-    if df.empty:
-        raise ValueError("The provided DataFrame is empty and cannot be inserted.")
-
-    buffer = io.StringIO()
-    df.to_csv(buffer, index=False, header=False)
-    buffer.seek(0)
-
-    try:
-        sql = f"""
-        COPY {schema}.{table_name} ({', '.join(df.columns)})
-        FROM STDIN WITH CSV
-        """
-        cur.copy_expert(sql=sql, file=buffer)
-
-    except Exception as e:
-        raise RuntimeError(
-            f"Error inserting DataFrame into {schema}.{table_name}: {e}"
-        ) from e
-
-    finally:
-        buffer.close()
 
 
 def estimate_table_rows(
