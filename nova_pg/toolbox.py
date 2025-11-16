@@ -5,32 +5,44 @@ import io
 
 def insert_dataframe(
     *,
-    cur, df: pd.DataFrame,
+    cur,
+    df: pd.DataFrame,
     table_name: str,
-    schema: str
+    schema: str,
+    chunksize: int = 5000
 ):
     """Insert a pandas DataFrame into a target database table."""
     if df.empty:
-        raise ValueError("The provided DataFrame is empty and cannot be inserted.")
+        raise ValueError(
+            "The provided DataFrame is empty and cannot be inserted."
+        )
+    
+    start = 0
+    end = min(start + chunksize, len(df))
+    while start < len(df):
+        chunk = df.iloc[start:end]
+        
+        buffer = io.StringIO()
+        chunk.to_csv(buffer, index=False, header=False)
+        buffer.seek(0)
 
-    buffer = io.StringIO()
-    df.to_csv(buffer, index=False, header=False)
-    buffer.seek(0)
+        try:
+            sql = f"""
+            COPY {schema}.{table_name} ({', '.join(chunk.columns)})
+            FROM STDIN WITH CSV
+            """
+            cur.copy_expert(sql=sql, file=buffer)
 
-    try:
-        sql = f"""
-        COPY {schema}.{table_name} ({', '.join(df.columns)})
-        FROM STDIN WITH CSV
-        """
-        cur.copy_expert(sql=sql, file=buffer)
+        except Exception as e:
+            raise RuntimeError(
+                f"Error inserting DataFrame into {schema}.{table_name}: {e}"
+            ) from e
 
-    except Exception as e:
-        raise RuntimeError(
-            f"Error inserting DataFrame into {schema}.{table_name}: {e}"
-        ) from e
+        finally:
+            buffer.close()
 
-    finally:
-        buffer.close()
+        start = end
+        end += chunksize
 
 
 def schema_exists(
