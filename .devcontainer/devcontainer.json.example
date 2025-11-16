@@ -16,15 +16,15 @@
   ],
 
   "mounts": [
-    "source=${localWorkspaceFolder},target=/${localWorkspaceFolderBasename},type=bind"
+    "source=${localWorkspaceFolder},target=/workspace,type=bind"
   ],
 
-  "workspaceFolder": "/${localWorkspaceFolderBasename}",
+  "workspaceFolder": "/workspace",
   "remoteUser": "myuser",
 
   "containerEnv": {
-    "PYTHONPATH": "/${localWorkspaceFolderBasename}"
+    "PYTHONPATH": "/workspace"
   },
 
-  "postCreateCommand": "./setup.sh"
+  "postCreateCommand": "bash ./setup.sh"
 }
