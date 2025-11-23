@@ -1,6 +1,6 @@
 from contextlib import contextmanager
 from rich.progress import Progress
-from typing import List
+from typing import List, Tuple
 import psycopg2
 
 
@@ -198,7 +198,7 @@ def fetch_in_chunks(
     query: str,
     table_name: str,
     batch_size: int = 1000
-) -> List:
+) -> Tuple[List[str], List[Tuple]]:
     """Execute a SELECT query and return the fetched results with a progress bar.
 
     Args:
@@ -217,6 +217,7 @@ def fetch_in_chunks(
         )
 
         cur.execute(query)
+        column_names = [desc[0] for desc in cur.description]
         results = []
 
         with Progress() as progress:
@@ -232,7 +233,7 @@ def fetch_in_chunks(
                 progress.update(task, advance=len(batch))
                 results.extend(batch)
 
-        return results
+        return column_names, results
 
     except Exception as e:
         raise Exception(f"An error occurred during fetch: {e}")
