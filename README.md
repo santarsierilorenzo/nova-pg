@@ -76,11 +76,17 @@ url_db = nova_pg.config.build_connection_string(
 5. Use functions in the `utils` module:
 
 ```python
-QUERY = ""
+QUERY = """
+SELECT *
+FROM prices.nq_1_min
+"""
+
 with nova_pg.utils.get_cursor(url_db) as cur:
-    data = nova_pg.utils.fetch_query(
+    cols, data = nova_pg.utils.fetch_in_chunks(
         cur=cur,
-        query=QUERY
+        query=QUERY,
+        table_name="nq_1_min",
+        batch_size=10000            
     )
 ```
 
