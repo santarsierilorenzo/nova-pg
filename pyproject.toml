@@ -8,7 +8,7 @@ authors = [{ name = "Lorenzo Santarsieri" }]
 requires-python = ">=3.10"
 dependencies = [
     "psycopg2>=2.9",
-    "pandas>=pandas==2.3.3",
+    "pandas>=2.3.3",
     "rich==14.2.0"
 ]
 
