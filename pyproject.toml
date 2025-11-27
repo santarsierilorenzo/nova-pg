@@ -1,6 +1,6 @@
 [project]
 name = "nova-pg"
-version = "0.1.8"
+version = "0.1.9"
 description = "PostgreSQL utilities"
 readme = "README.md"
 license = { text = "MIT" }
@@ -9,7 +9,6 @@ requires-python = ">=3.10"
 dependencies = [
     "psycopg2>=2.9",
     "pandas>=2.3.3",
-    "rich==14.2.0"
 ]
 
 [build-system]
