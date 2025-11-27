@@ -246,11 +246,6 @@ def fetch_in_chunks(
         Exception: On execution or fetch errors.
     """
     try:
-        rows_estimate = estimate_table_rows(
-            cur=cur,
-            table_name=table_name,
-        )
-
         cur.execute(query)
         column_names = [desc[0] for desc in cur.description]
         results: List[Tuple] = []
