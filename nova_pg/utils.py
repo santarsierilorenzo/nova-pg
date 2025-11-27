@@ -1,50 +1,54 @@
 from contextlib import contextmanager
-from rich.progress import Progress
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 import psycopg2
 
 
 def connect_to_db(
-    database_url: str, 
-):
-    """Open a database connection for the specified environment.
+    database_url: str,
+) -> psycopg2.extensions.connection:
+    """Open a database connection.
 
     Args:
-        database_url: url string builded using `build_connection_string`.
+        database_url: PostgreSQL connection string.
 
     Returns:
-        psycopg2.connection: An active database connection object.
+        psycopg2 connection object with autocommit disabled.
+
+    Raises:
+        ConnectionError: If connection cannot be established.
     """
     try:
         conn = psycopg2.connect(database_url)
         conn.autocommit = False
         return conn
-    
+
     except psycopg2.Error as e:
         raise ConnectionError(f"Connection to db failed: {e}")
-    
+
 
 @contextmanager
 def get_cursor(
-    database_url: str
+    database_url: str,
 ):
-    """Context manager that provides a database cursor with automatic
-    commit/rollback handling.
+    """Context manager yielding a cursor with automatic transaction handling.
 
     Args:
-        database_url (str): A valid PostgreSQL connection string.
+        database_url: PostgreSQL connection string.
 
     Yields:
-        psycopg2.cursor: A cursor object ready for executing queries.
+        psycopg2 cursor.
+
+    Raises:
+        Propagates any exception from query execution.
     """
     conn = connect_to_db(database_url)
     cur = conn.cursor()
 
     try:
         yield cur
-        conn.commit()  # Confirm modifies
+        conn.commit()
 
-    except Exception as e:
+    except Exception:
         conn.rollback()
         raise
 
@@ -58,11 +62,14 @@ def execute_query(
     cur,
     query: str,
 ) -> None:
-    """Execute a single SQL query (INSERT, UPDATE, DELETE, etc.).
+    """Execute a generic SQL statement.
 
     Args:
-        cur: psycopg2.cursor: A cursor object ready for executing queries.
-        query (str): The SQL statement to be executed. 
+        cur: psycopg2 cursor.
+        query: SQL statement.
+
+    Raises:
+        Exception: On execution errors.
     """
     try:
         cur.execute(query)
@@ -74,27 +81,27 @@ def fetch_one(
     *,
     cur,
     query: str,
-) -> tuple:
-    """Execute a SQL SELECT query and return a single row.
-
-    Executes the provided SQL query using the given database cursor and
-    retrieves exactly one row from the result set.
+) -> Tuple[List[str], Optional[Tuple]]:
+    """Execute a SELECT query and fetch the first row.
 
     Args:
-        cur: A database cursor object (e.g., from psycopg2).
-        query (str): The SQL SELECT query to execute.
+        cur: psycopg2 cursor.
+        query: SQL SELECT query.
 
     Returns:
-        tuple: The first row returned by the query.
-            Returns None if the result set is empty.
+        Tuple of:
+            - List of column names.
+            - First row or None.
 
     Raises:
-        Exception: If an error occurs while executing the query.
+        Exception: On execution errors.
     """
     try:
         cur.execute(query)
-        results = cur.fetchone()
-        return results
+        column_names = [desc[0] for desc in cur.description]
+        result = cur.fetchone()
+        return column_names, result
+
     except Exception as e:
         raise Exception(f"An error occurred during fetch: {e}")
 
@@ -104,22 +111,28 @@ def fetch_many(
     cur,
     query: str,
     batch_size: int,
-) -> list:
-    """Execute a SELECT query and return the fetched results.
+) -> Tuple[List[str], List[Tuple]]:
+    """Execute a SELECT query and fetch up to batch_size rows.
 
     Args:
-        cur: psycopg2.cursor: A cursor object ready for executing queries.
-        query (str): The SQL SELECT query.
+        cur: psycopg2 cursor.
+        query: SQL SELECT query.
+        batch_size: Max number of rows to fetch.
 
     Returns:
-        list: The result set returned by the query.
+        Tuple of:
+            - List of column names.
+            - List of rows.
+
+    Raises:
+        Exception: On execution errors.
     """
     try:
         cur.execute(query)
+        column_names = [desc[0] for desc in cur.description]
         results = cur.fetchmany(batch_size)
+        return column_names, results
 
-        return results
-    
     except Exception as e:
         raise Exception(f"An error occurred during fetch: {e}")
 
@@ -128,35 +141,44 @@ def fetch_all(
     *,
     cur,
     query: str,
-) -> list:
-    """Execute a SELECT query and return the fetched results.
+) -> Tuple[List[str], List[Tuple]]:
+    """Execute a SELECT query and fetch the entire result set.
 
     Args:
-        cur: psycopg2.cursor: A cursor object ready for executing queries.
-        query (str): The SQL SELECT query.
+        cur: psycopg2 cursor.
+        query: SQL SELECT query.
 
     Returns:
-        list: The result set returned by the query.
+        Tuple of:
+            - List of column names.
+            - List of all rows.
+
+    Raises:
+        Exception: On execution errors.
     """
     try:
         cur.execute(query)
+        column_names = [desc[0] for desc in cur.description]
         results = cur.fetchall()
-        return results
+        return column_names, results
+
     except Exception as e:
         raise Exception(f"An error occurred during fetch: {e}")
-    
+
 
 def create_schema(
     *,
     cur,
-    schema_name: str
+    schema_name: str,
 ) -> None:
-    """Create a new schema (namespace) in the database if it does not already
-    exist.
+    """Create a schema if it does not already exist.
 
     Args:
-        cur: psycopg2.cursor: A cursor object ready for executing queries.
-        schema_name (str): The name of the schema to create.  
+        cur: psycopg2 cursor.
+        schema_name: Schema name.
+
+    Raises:
+        Exception: On execution errors.
     """
     try:
         query = f'CREATE SCHEMA IF NOT EXISTS "{schema_name}";'
@@ -169,24 +191,32 @@ def create_schema(
 def estimate_table_rows(
     *,
     cur,
-    table_name: str
-):
-    """
-    Estimate the number of rows in a PostgreSQL table using pg_class.reltuples.
+    table_name: str,
+) -> int:
+    """Estimate row count of a table via pg_class.reltuples.
 
-    Fast, approximate row count (no full COUNT(*)).
-    Returns 100_000 if the estimate isn't available.
+    Args:
+        cur: psycopg2 cursor.
+        table_name: Name of the table.
+
+    Returns:
+        Estimated number of rows. Defaults to 100_000 if unavailable.
+
+    Raises:
+        Exception: On execution errors.
     """
     try:
-        cur.execute("""
-            SELECT reltuples::BIGINT, relpages
+        cur.execute(
+            """
+            SELECT reltuples::BIGINT
             FROM pg_class
             WHERE relname = %s;
-        """, (table_name,))
+            """,
+            (table_name,),
+        )
 
         row = cur.fetchone()
-        estimated_rows = int(row[0]) if row is not None else 100_000
-        return estimated_rows
+        return int(row[0]) if row else 100_000
 
     except Exception as e:
         raise Exception(f"An error occurred during fetch: {e}")
@@ -197,41 +227,40 @@ def fetch_in_chunks(
     cur,
     query: str,
     table_name: str,
-    batch_size: int = 1000
+    batch_size: int = 1000,
 ) -> Tuple[List[str], List[Tuple]]:
-    """Execute a SELECT query and return the fetched results with a progress bar.
+    """Execute a SELECT query and fetch results incrementally.
 
     Args:
-        cur: psycopg2.cursor (should be a *named cursor* for large queries).
-        query (str): SQL SELECT query.
-        table_name (str): Name of the table to estimate row count.
-        batch_size (int): Number of rows to fetch per batch.
+        cur: psycopg2 cursor (supports named cursors for large datasets).
+        query: SQL SELECT query.
+        table_name: Table used for row estimation.
+        batch_size: Number of rows per batch.
 
     Returns:
-        list: The result set.
+        Tuple of:
+            - List of column names.
+            - List of all fetched rows.
+
+    Raises:
+        Exception: On execution or fetch errors.
     """
     try:
         rows_estimate = estimate_table_rows(
             cur=cur,
-            table_name=table_name
+            table_name=table_name,
         )
 
         cur.execute(query)
         column_names = [desc[0] for desc in cur.description]
-        results = []
+        results: List[Tuple] = []
 
-        with Progress() as progress:
-            task = progress.add_task(
-                f"[cyan]Fetching from {table_name}...", total=rows_estimate
-            )
+        while True:
+            batch = cur.fetchmany(batch_size)
+            if not batch:
+                break
 
-            while True:
-                batch = cur.fetchmany(batch_size)
-                if not batch:
-                    break
-
-                progress.update(task, advance=len(batch))
-                results.extend(batch)
+            results.extend(batch)
 
         return column_names, results
 

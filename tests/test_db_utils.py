@@ -68,7 +68,7 @@ def test_fetch_all_success():
     mock_cursor = MagicMock()
     mock_cursor.fetchall.return_value = [("row1",), ("row2",)]
 
-    result = utils.fetch_all(
+    cols, result = utils.fetch_all(
         cur=mock_cursor,
         query="SELECT * FROM table"
     )
