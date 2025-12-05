@@ -115,11 +115,10 @@ def table_exists(
 
     query = f"""
     SELECT EXISTS (
-        SELECT FROM pg_class c
-        JOIN pg_namespace n ON n.oid = c.relnamespace
-        WHERE n.nspname = '{safe_schema}'
-          AND c.relname = '{safe_table_name}'
-          AND c.relkind = 'r'
+        SELECT 1
+        FROM information_schema.tables
+        WHERE table_schema = '{safe_schema}'
+        AND table_name = '{safe_table_name}'
     );
     """
 
