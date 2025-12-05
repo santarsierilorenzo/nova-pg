@@ -16,15 +16,29 @@
   ],
 
   "mounts": [
-    "source=${localWorkspaceFolder},target=/workspace,type=bind"
+    "source=${localWorkspaceFolder},target=/${localWorkspaceFolderBasename},type=bind"
   ],
 
-  "workspaceFolder": "/workspace",
+  "workspaceFolder": "/${localWorkspaceFolderBasename}",
   "remoteUser": "myuser",
 
-  "containerEnv": {
-    "PYTHONPATH": "/workspace"
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "eamodio.gitlens@17.0.1",
+        "PKief.material-icon-theme@5.27.0",
+        "ms-python.python@2025.16.0",
+        "ms-python.vscode-pylance@2025.8.3",
+        "ms-toolsai.jupyter@2025.3.0",
+        "ms-toolsai.jupyter-keymap@1.1.2",
+        "ms-toolsai.jupyter-renderers@1.3.0"
+      ]
+    }
   },
 
-  "postCreateCommand": "bash ./setup.sh"
+  "containerEnv": {
+    "PYTHONPATH": "/${localWorkspaceFolderBasename}"
+  },
+
+  "postCreateCommand": "./setup.sh"
 }
