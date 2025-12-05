@@ -55,7 +55,7 @@ Follow these steps to set up your local development environment:
 4. Once the Docker container is running, you’ll have access to all required dependencies and tools pre-installed.
 
 
-### Get Started
+### 🐘 Get Started
 
 1. Copy `db_config.json.example`, rename it to `db_config.json`, and fill it with your database credentials.
 
