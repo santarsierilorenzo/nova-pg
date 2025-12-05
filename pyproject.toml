@@ -1,6 +1,6 @@
 [project]
 name = "nova-pg"
-version = "0.2.3"
+version = "0.2.4"
 description = "PostgreSQL utilities"
 readme = "README.md"
 license = { text = "MIT" }

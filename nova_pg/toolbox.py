@@ -127,7 +127,7 @@ def table_exists(
     if row is None:
         return False
 
-    return bool(row[0])
+    return row[0] is True
 
 
 def create_table(
